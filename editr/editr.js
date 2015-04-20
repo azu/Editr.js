@@ -9,13 +9,13 @@
  * Version: 2.3.0
  */
 
-(function(w) {
+(function (w) {
 
     'use strict';
 
     var EditrInstances = EditrInstances || [];
 
-    var Editr = function(opts) {
+    var Editr = function (opts) {
 
         EditrInstances.push(this);
 
@@ -36,7 +36,7 @@
                 'html': {
                     type: 'html',
                     extension: 'html',
-                    fn: function(str, isEncoded) {
+                    fn: function (str, isEncoded) {
                         str = str
                             .replace(/body\b[^>]*>/, '<body><div class="body">')
                             .replace('</body>', '</body>');
@@ -54,10 +54,10 @@
                             }
 
                             str = str
-                            // replace multiple empty lines with one empty line
-                            .replace(/[\r\n]+/gi, '\n')
-                            // remove first and last empty line
-                            .replace(/^[\r\n]|[\n\r]$/gi, '');
+                                // replace multiple empty lines with one empty line
+                                .replace(/[\r\n]+/gi, '\n')
+                                // remove first and last empty line
+                                .replace(/^[\r\n]|[\n\r]$/gi, '');
                         } else {
                             str = str.html();
                         }
@@ -68,26 +68,41 @@
                 'css': {
                     type: 'css',
                     extension: 'css',
-                    fn: function(str) {
+                    fn: function (str) {
                         return str;
                     }
                 },
                 'js': {
                     type: 'js',
                     extension: 'js',
-                    fn: function(str) {
+                    fn: function (str) {
                         return str;
+                    }
+                },
+                'es6': {
+                    type: 'js',
+                    extension: 'es6',
+                    fn: function (str) {
+                        var code;
+                        try {
+                            code = babel.transform(str, {
+                                filename: 'repl'
+                            }).code;
+                        } catch (e) {
+                            return e;
+                        }
+                        return code;
                     }
                 },
                 'less': {
                     type: 'css',
                     extension: 'less',
-                    fn: function(str) {
-                        var parser = new(less.Parser),
+                    fn: function (str) {
+                        var parser = new (less.Parser),
                             parsed = '',
                             error;
 
-                        parser.parse(str, function(err, tree) {
+                        parser.parse(str, function (err, tree) {
                             if (err) {
                                 error = err;
                                 return err;
@@ -101,7 +116,7 @@
                 'coffee': {
                     type: 'js',
                     extension: 'coffee',
-                    fn: function(str) {
+                    fn: function (str) {
                         return CoffeeScript.compile(str);
                     }
                 }
@@ -124,7 +139,8 @@
 
             wrap: false,
 
-            callback: function() {}
+            callback: function () {
+            }
         }, opts);
 
         var htmlOpts = ['path', 'readonly', 'theme', 'view', 'wrap'];
@@ -155,7 +171,7 @@
             /**
              * Compose Editr parts - nav, content, loader
              */
-            ui: function() {
+            ui: function () {
                 el.editor.addClass('editr-view--' + opts.view);
 
                 // Build bar
@@ -179,7 +195,7 @@
              * Build Editr nav
              * @return {object}
              */
-            nav: function() {
+            nav: function () {
                 var navs = [];
 
                 navs.push(build.navList('html', 'Result', 'result'));
@@ -198,7 +214,7 @@
              * @param  {string} label
              * @return {string}
              */
-            navList: function(type, label, pseudoType) {
+            navList: function (type, label, pseudoType) {
                 var files = data.files[type],
                     nav, subnav;
 
@@ -229,7 +245,8 @@
                         class: 'editr__nav-label',
                         text: files[i].filename
                     }));
-                };
+                }
+                ;
 
                 return nav;
             },
@@ -237,14 +254,14 @@
             /**
              * Setup preview iframe, load preview of first html file
              */
-            preview: function() {
+            preview: function () {
                 var index = data.files.html[0];
 
                 return __.obj('iframe', {
                     class: 'editr__result',
                     name: 'editr_' + get.randomID(),
                     src: opts.path + '/index.html'
-                }).load(function() {
+                }).load(function () {
                     el.preview.result = $(this);
                     el.preview.body = el.preview.result.contents().find('body');
                     el.preview.head = el.preview.result.contents().find('head');
@@ -268,13 +285,13 @@
             /**
              * Compose editors
              */
-            editors: function() {
+            editors: function () {
                 var editors = {},
                     file;
 
                 // Loop through categories
-                $.each(data.files, function(extension, files) {
-                    $.each(files, function(id, file) {
+                $.each(data.files, function (extension, files) {
+                    $.each(files, function (id, file) {
                         editors[extension] = editors[extension] || [];
 
                         // Build editor and push it to file data
@@ -294,7 +311,7 @@
              * @param  {object} file
              * @return {object}
              */
-            editor: function(file, id) {
+            editor: function (file, id) {
                 var aceEditor,
                     textarea = __.obj('div', {
                         id: 'editr_' + get.randomID(),
@@ -305,14 +322,15 @@
 
                 aceEditor = ace.edit(textarea.attr('id'));
                 aceEditor.setTheme("ace/theme/" + opts.theme);
-                aceEditor.getSession().setMode('ace/mode/' + (file.extension === 'js' ? 'javascript' : file.extension));
+                aceEditor.getSession().setMode('ace/mode/' + (file.extension === 'js' || file.extension === 'es6'
+                    ? 'javascript' : file.extension));
                 aceEditor.getSession().setUseWrapMode(opts.wrap);
                 aceEditor.setReadOnly(opts.readonly);
                 aceEditor.setWrapBehavioursEnabled(true);
                 aceEditor.setOption("enableEmmet", true);
                 aceEditor.getSession().setUseWorker(false);
 
-                aceEditor.on('change', _.debounce(function() {
+                aceEditor.on('change', _.debounce(function () {
                     if (data.activeItem !== -1) {
                         __.renderPreview(data.files.html[data.activeItem]);
                     }
@@ -331,7 +349,7 @@
              * @param  {Function || Object} fn
              * @return {jQuery}
              */
-            obj: function(type, attrs, fn) {
+            obj: function (type, attrs, fn) {
                 return $('<' + type + '>', attrs).on(fn);
             },
 
@@ -339,7 +357,7 @@
              * Check if Editr editor is in panel view
              * @return {Boolean}
              */
-            isPaneled: function() {
+            isPaneled: function () {
                 return ['horizontal', 'vertical', 'cartesian'].indexOf(opts.view) != -1;
             },
 
@@ -347,7 +365,7 @@
              * Debounce fn from underscore source
              * @return {Function}
              */
-            debounce: function(func, wait, immediate) {
+            debounce: function (func, wait, immediate) {
 
                 var timeout;
 
@@ -356,15 +374,17 @@
                         args = arguments;
 
                     function delayed() {
-                        if (!immediate)
+                        if (!immediate) {
                             func.apply(context, args);
+                        }
                         timeout = null;
                     };
 
-                    if (timeout)
+                    if (timeout) {
                         clearTimeout(timeout);
-                    else if (immediate)
+                    } else if (immediate) {
                         func.apply(context, args);
+                    }
 
                     timeout = setTimeout(delayed, wait || 100);
                 };
@@ -376,14 +396,14 @@
              * @param  {Function} fn
              * @return {Function}
              */
-            whenReady: function(fn) {
+            whenReady: function (fn) {
                 var timer = null;
 
-                return function() {
+                return function () {
                     var context = this,
                         args = arguments;
 
-                    timer = setInterval(function() {
+                    timer = setInterval(function () {
                         if (data.filesLoaded === data.filesTotal) {
                             fn.call(context, args);
                         }
@@ -396,11 +416,13 @@
              * @param  {object} obj
              * @return {Integer}
              */
-            size: function(obj) {
+            size: function (obj) {
                 var size = 0,
                     key;
                 for (key in obj) {
-                    if (obj.hasOwnProperty(key)) size++;
+                    if (obj.hasOwnProperty(key)) {
+                        size++;
+                    }
                 }
                 return size;
             },
@@ -410,7 +432,7 @@
              * @param  {string}  filename
              * @return {Boolean}
              */
-            isHidden: function(filename) {
+            isHidden: function (filename) {
                 return filename.indexOf('!') === 0;
             },
 
@@ -419,7 +441,7 @@
              * @param  {string}  filename
              * @return {Boolean}
              */
-            isGist: function(filename) {
+            isGist: function (filename) {
                 return filename.indexOf('$') === 0;
             },
 
@@ -428,7 +450,7 @@
              * @param  {string}  str
              * @return {Boolean}
              */
-            isEncoded: function(str) {
+            isEncoded: function (str) {
                 return /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$/.test(str);
             },
 
@@ -438,7 +460,7 @@
              * @param  {string} data
              * @return {string}
              */
-            base64Decode: function(data) {
+            base64Decode: function (data) {
                 var b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
                 var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
                     ac = 0,
@@ -485,7 +507,7 @@
              * @param {Boolean} isGistFile
              * @param {Integer}  gistID
              */
-            addFile: function(type, filename, isDefault, isGistFile, gistID) {
+            addFile: function (type, filename, isDefault, isGistFile, gistID) {
                 // Create single file object with defaults
                 var file = {
                     content: '',
@@ -575,7 +597,7 @@
              * @param  {object} file
              * @param  {string} code
              */
-            fileContentCallback: function(file, content) {
+            fileContentCallback: function (file, content) {
                 if (file.isGistFile) {
                     file.content = data.gists[file.gistID].files[file.filename].content;
                 }
@@ -598,11 +620,13 @@
                 file.editor.clearSelection();
             },
 
-            renderPreview: function(file) {
+            renderPreview: function (file) {
                 var fileCSS, fileJS;
                 data.activeItem = file.id;
 
-                if (!file) return;
+                if (!file) {
+                    return;
+                }
 
                 // Remove old css
                 var styleHolder = el.preview.head.find('.editr-stylesheet').empty();
@@ -658,7 +682,7 @@
              * @param  {bool} withHidden
              * @return {array}
              */
-            files: function(type, withHidden) {
+            files: function (type, withHidden) {
                 var files = editor.data('files-' + type) || '',
                     hiddenFilesTotal = 0;
 
@@ -691,7 +715,7 @@
              * Load gist data
              * @param  {object} gist
              */
-            gistsData: function(callback) {
+            gistsData: function (callback) {
                 data.gistsLoaded = 0;
 
                 if (__.size(data.gists) === 0) {
@@ -706,8 +730,7 @@
                         data: {
                             id: id
                         },
-                        success: function(response) {
-                            console.log(response);
+                        success: function (response) {
                             data.gists[response.id] = response;
 
                             ++data.gistsLoaded;
@@ -725,16 +748,15 @@
              * @param  {ACE Editor} textarea
              * @param  {object} file
              */
-            fileContent: function(file) {
+            fileContent: function (file) {
                 // If File is encoded or it's file from  gist then it's already loaded
                 if (file.isEncoded || file.isGistFile || file.isDefault) {
                     __.fileContentCallback(file);
                     return;
                 }
-
                 $.ajax({
                     url: [opts.path, data.item, file.filename].join('/'),
-                    success: function(response) {
+                    success: function (response) {
                         __.fileContentCallback(file, response);
                     },
                     cache: false
@@ -746,7 +768,7 @@
              * @param  {string} str
              * @return {string}
              */
-            parser: function(str) {
+            parser: function (str) {
                 // Match base64 extension
                 var result = str.match(/^(.*):/) || [];
 
@@ -769,7 +791,7 @@
              * @param  {int} id
              * @return {ACE }
              */
-            editor: function(type, id) {
+            editor: function (type, id) {
                 return data.files[type][id].editor;
             },
 
@@ -778,7 +800,7 @@
              * @param  {string} type
              * @return {array}
              */
-            hiddenFiles: function(type) {
+            hiddenFiles: function (type) {
                 var files = [];
 
                 for (var i = 0; i < data.files[type].length; i++) {
@@ -795,7 +817,7 @@
              * @param  {string} filename
              * @return {string}
              */
-            extension: function(filename) {
+            extension: function (filename) {
                 if (!filename.length) {
                     return null;
                 }
@@ -816,9 +838,9 @@
              * Return random ID
              * @return {string}
              */
-            randomID: function() {
+            randomID: function () {
                 var a, b = b || 16;
-                return Array(a || 8).join(0).replace(/0/g, function() {
+                return Array(a || 8).join(0).replace(/0/g, function () {
                     return (0 | Math.random() * b).toString(b)
                 });
             }
@@ -826,7 +848,7 @@
 
         // Files loaded? Good, fire calback
         var onLoaded = {
-            init: function() {
+            init: function () {
                 // Fire user callback
                 opts.callback(self);
 
@@ -838,15 +860,15 @@
             /**
              * Bind actions for nav items
              */
-            bindNav: function() {
+            bindNav: function () {
                 var tabs = el.nav.find('.editr__nav-item'),
                     navItems = tabs.find('.editr__subnav').children();
 
-                tabs.children('.editr__nav-label').on('click', function() {
+                tabs.children('.editr__nav-label').on('click', function () {
                     $(this).next().children().first().trigger('click');
                 });
 
-                navItems.on('click', function(event) {
+                navItems.on('click', function (event) {
                     var item = $(this),
                         file,
                         aceEditor;
@@ -869,7 +891,8 @@
                     } else { // Show editor
                         aceEditor = get.editor(item.data('type'), item.data('id'));
 
-                        $(aceEditor.container).addClass('active').siblings(__.isPaneled() ? '.editr__editor--' + item.data('type') : '').removeClass('active');
+                        $(aceEditor.container).addClass('active').siblings(__.isPaneled()
+                            ? '.editr__editor--' + item.data('type') : '').removeClass('active');
 
                         aceEditor.focus();
 
@@ -891,7 +914,7 @@
             }
         };
 
-        var init = function() {
+        var init = function () {
             // Get project name
             data.item = editor.data('item');
 
@@ -905,8 +928,7 @@
                 data.files['html'].length +
                 data.files['css'].length +
                 data.files['js'].length;
-
-            get.gistsData(function() {
+            get.gistsData(function () {
                 build.ui();
             });
         };
@@ -919,14 +941,14 @@
          * API
          *=================================================*/
 
-        // Bind Editr DOM element
+            // Bind Editr DOM element
         this.editor = editor;
 
         /**
          * Check if Editr is fully loaded
          * @return {Boolean}
          */
-        this.isReady = function() {
+        this.isReady = function () {
             return data.filesLoaded === data.filesTotal;
         };
 
@@ -934,7 +956,7 @@
          * Return gists array
          * @return {Object}
          */
-        this.getGists = function() {
+        this.getGists = function () {
             return data.gists;
         };
 
@@ -943,7 +965,7 @@
          * @param  {String} type File type
          * @return {Object}      File data
          */
-        this.getFiles = function(type) {
+        this.getFiles = function (type) {
             return type ? data.files[type] : data.files;
         };
 
@@ -953,7 +975,7 @@
          * @param  {Integer} id   File ID
          * @return {Object}      File data
          */
-        this.getFile = function(type, id) {
+        this.getFile = function (type, id) {
             return data.files[type][id];
         };
 
@@ -961,7 +983,7 @@
          * Set Editr textareas read state
          * @param  {bool} value State
          */
-        this.setReadOnly = __.whenReady(function(value) {
+        this.setReadOnly = __.whenReady(function (value) {
             for (var extension in data.files) {
                 for (var i = 0; i < data.files[extension].length; i++) {
                     data.files[extension][i].editor.setReadOnly(value);
@@ -984,7 +1006,7 @@
     }
 
     if (typeof define === "function" && define.amd) {
-        define("editr", [], function() {
+        define("editr", [], function () {
             return Editr;
         });
     }

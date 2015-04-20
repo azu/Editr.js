@@ -30,9 +30,9 @@
 <body>
 
     <div class="editr"
-         data-files-html="$6699569, switch.html, radio.html"
-         data-files-css="$6699569, style.less, switch.css, radio.css"></div>
+         data-files-js="App.js.es6"></div>
 
+    <script src="../node_modules/babel-core/browser.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
     <script src="//cdn.jsdelivr.net/ace/1.1.01/min/ace.js"></script>
@@ -46,10 +46,10 @@
     $('.editr').each(function() {
         new Editr({
             el: this,
-            path: 'projects',
-            view: 'vertical',
-            gistProxyURL: '../editr/libs/proxy.gist.php',
-            callback: function(editr) {}
+            theme: 'clouds',
+            path: 'projects/item',
+            callback: function(editr) {
+            }
         });
     });
     </script>
