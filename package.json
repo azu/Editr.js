@@ -1,0 +1,27 @@
+{
+  "name": "Editr.js",
+  "version": "1.0.0",
+  "description": "[![Gittip](http://img.shields.io/gittip/idered.png)](https://www.gittip.com/Idered/)",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Idered/Editr.js.git"
+  },
+  "author": "azu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Idered/Editr.js/issues"
+  },
+  "homepage": "https://github.com/Idered/Editr.js",
+  "devDependencies": {
+    "babel-core": "^5.0.10",
+    "browserify": "^9.0.8",
+    "watchify": "^3.1.1"
+  }
+}
